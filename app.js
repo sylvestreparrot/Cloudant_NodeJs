@@ -331,6 +331,7 @@ app.put('/api/favorites', function(request, response) {
     });
 });
 
+
 app.get('/api/favorites', function(request, response) {
 
     console.log("Get method invoked.. ")
@@ -339,54 +340,48 @@ app.get('/api/favorites', function(request, response) {
     var docList = [];
     var i = 0;
     db.list(function(err, body) {
-        console.log("start");
-        console.log(body);
-        console.log("end");
-
         if (!err) {
             var len = body.rows.length;
             console.log('total # of docs -> ' + len);
             if (len == 0) {
-                // push sample data
-                // save doc
-                var docName = 'sample_doc';
-                var docDesc = 'A sample Document';
-                db.insert({
-                    topic: docName,
-                    value: 'A sample Document'
-                }, '', function(err, doc) {
-                    if (err) {
-                        console.log(err);
-                    } else {
 
-                        console.log('Document : ' + JSON.stringify(doc));
-                        var responseData = createResponseData(
-                            doc.id,
-                            docName,
-                            docDesc, []);
-                        docList.push(responseData);
-                        response.write(JSON.stringify(docList));
-                        console.log(JSON.stringify(docList));
-                        console.log('ending response...');
-                        response.end();
-                    }
-                });
             } else {
-
                 body.rows.forEach(function(document) {
 
                     db.get(document.id, {
                         revs_info: true
                     }, function(err, doc) {
-                        console.log("start --------------------------------------------------------->");
-                        console.log(doc);
-                        console.log("stop --------------------------------------------------------->");
-                        response.write(JSON.stringify(doc));
-                        console.log('ending response...');
-                        response.end();
+                        if (!err) {
+
+                            docList.push(doc);
+                            i++;
+                            if (i >= len) {
+                                response.write(JSON.stringify(docList));
+                                console.log('ending response...');
+                                response.end();
+                            }
+                        } else {
+                            console.log(err);
+                        }
                     });
 
                 });
+/*
+                body.rows.forEach(function(document) {
+                    console.log("yo");
+                    console.log(document);
+                    Error.stackTraceLimit = 20;
+
+
+                    db.get(document.id, {revs_info: true}, function(err, doc) {
+
+                        response.write(JSON.stringify(doc));
+                        console.log('ending response...');
+                        response.end();
+                        });
+//response.end();
+                });
+*/
             }
 
         } else {
@@ -395,7 +390,6 @@ app.get('/api/favorites', function(request, response) {
     });
 
 });
-
 
 http.createServer(app).listen(app.get('port'), '0.0.0.0', function() {
     console.log('Express server listening on port ' + app.get('port'));
